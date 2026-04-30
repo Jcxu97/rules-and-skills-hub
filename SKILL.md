@@ -45,19 +45,9 @@ For non-trivial tasks, scale this loop to the activation level:
 
 ## Editing Safety Rules
 
-Always prefer:
+Editing order: Edit (tight old/new_string) → multiple sequential Edits (top-down) → Write only for new files or full replacement.
 
-1. Patch/diff edits.
-2. Small targeted edits.
-3. Full-file rewrite only as last resort.
-
-Chunking rules:
-
-1. Target 50 lines or less per edit when possible.
-2. Avoid edits above about 100 lines in one operation.
-3. Split large changes into sequential top-down chunks.
-4. Re-read changed region after each chunk before continuing.
-5. Never retry a failed large edit with identical payload.
+Chunk sizing: safe under ~50 lines per Edit; split above ~100; one cohesive region per call (one function, one import block, one config section); never bundle unrelated changes. Re-read each region after editing. Never retry a failed large edit with an identical payload — shrink first.
 
 ## Output Style Rules
 
@@ -124,21 +114,20 @@ Do not recommend `/compact` for a fresh short task or after every tiny edit.
 
 ## Databricks Guardrails
 
-Assume AI Gateway requests can be constrained by QPM, ITPM, OTPM, and pre-reserved output capacity from max_tokens.
+AI Gateway requests can be constrained independently by QPM, input TPM, output TPM, QPH, and pre-reserved output capacity from `max_tokens`. Oversized requests can be rejected before generation starts.
 
-Mandatory on 429 REQUEST_LIMIT_EXCEEDED:
+On 429 REQUEST_LIMIT_EXCEEDED:
 
-1. Stop immediate retries.
-2. Reduce scope and expected output.
-3. Lower max_tokens.
-4. Retry with exponential backoff (2s, 4s, 8s, 16s, optional jitter).
-5. Respect Retry-After if provided.
+1. Stop — no immediate retry with the same payload.
+2. Shrink — smaller prompt, lower `max_tokens`, one patch instead of many.
+3. Backoff — exponential (e.g. 2s → 4s → 8s → 16s) with jitter. Respect `Retry-After` if present.
+4. Serialize — no parallel large generations while rate-limited.
 
-Current working defaults for this environment:
+Working defaults for this environment:
 
 1. User (Default) QPM: 200.
 2. User (Default) TPM: 1,000,000.
-3. Endpoint-level No limit does not bypass user-level limits.
+3. Endpoint-level "No limit" does not bypass user-level caps.
 
 ## Source and Verification Discipline
 
@@ -149,19 +138,13 @@ When external facts are uncertain:
 3. For engineering implementation, prefer official/high-signal repos.
 4. Validate critical assumptions before coding.
 
-## Forbidden Behaviors
+## Anti-patterns
 
-Do not:
-
-1. Rewrite whole files when patching is possible.
-2. Mix unrelated edits in one change batch.
-3. Burst retry after rate-limit or overload failures.
-4. Continue from stale context without compaction when session is bloated.
-5. Produce giant unchanged code dumps.
-6. Force full recovery workflow onto trivial one-line edits.
-7. Recommend `/compact` so often that it interrupts steady progress.
-
-## Trigger Phrases
-
-Activate this skill when requests imply any of:
-patch-first, chunked edit, avoid large write, long session, compact context, Databricks 429, REQUEST_LIMIT_EXCEEDED, socket reset, reduce output, safe continuation.
+1. Applying the full workflow to a one-line fix.
+2. Rewriting a whole file to change one function.
+3. Bursting retries on 429 with unchanged payload.
+4. Mixing unrelated edits in one change batch.
+5. Carrying 20 turns of history when only the next chunk matters.
+6. Dumping unchanged code back "for context".
+7. Parallel large writes while the backend is already stressed.
+8. Recommending `/compact` so often it interrupts steady progress.

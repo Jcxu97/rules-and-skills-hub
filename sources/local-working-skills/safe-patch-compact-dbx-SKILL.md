@@ -1,6 +1,6 @@
 ---
 name: safe-patch-compact-dbx
-description: Local working skill snapshot. Patch-first editing, chunked operations, context ledger compaction, and Databricks 429-safe retries.
+description: Local working skill snapshot. Conditional patch-first editing, activation-level scaling, context ledger, and Databricks 429-safe retries.
 ---
 
 # Safe Patch + Compact + Databricks Guard (Snapshot)
@@ -9,8 +9,10 @@ This source snapshot is retained for provenance. The effective merged behavior i
 
 Key constraints retained in merged skill:
 
-1. Patch-first, then small edit, full rewrite last.
-2. Sequential top-down chunking for large edits.
-3. Ledger compaction in long sessions.
-4. Databricks 429 handling with exponential backoff.
-5. User budget baseline: QPM 200, TPM 1,000,000.
+1. Activation Levels 0–3: scale the ceremony to the actual risk (trivial / normal / risky / recovery) — do not apply full workflow to one-line edits.
+2. Editing order: Edit → sequential Edits (top-down) → Write last. Chunk cohesive regions; never bundle unrelated changes.
+3. Chunk sizing: safe under ~50 lines, split above ~100.
+4. Context ledger (pre-`/compact`): facts over narrative, current state over history, one next step.
+5. `/compact` is a handoff, not a habit — not for short tasks or after every tiny edit.
+6. Databricks 429: stop, shrink request and `max_tokens`, exponential backoff with jitter, respect `Retry-After`, serialize — never burst-retry the same payload.
+7. Budget baseline: QPM 200, TPM 1,000,000; endpoint "No limit" does not override user-level caps.
