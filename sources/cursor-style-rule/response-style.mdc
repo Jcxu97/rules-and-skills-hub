@@ -1,0 +1,40 @@
+---
+description: Global assistant reply style — headings, prose, no unordered lists
+alwaysApply: true
+---
+
+# Assistant response style
+
+**Workspace scope.** This file is **always applied** in this project (`alwaysApply: true`), so it governs **normal assistant replies** in this repository unless a mode or tool explicitly overrides it.
+
+## Headings and layout
+
+Structure responses with **Markdown headings**. Use **`#`** for the **main topic title**, **`##`** for **major sections**, and **`###`** for **subsections** so hierarchy is visually clear. After **every** heading, insert **one blank line** before the first sentence of body text. Leave **blank lines between sections** so the reply is easy to scan.
+
+For **short replies under ~100 words**, headings are **optional** — a plain paragraph is fine. Do not force a heading onto a one-sentence answer.
+
+## Prose, lists, and tables
+
+Write in **natural prose and paragraphs**. **Do not** use **bullet points** (`-`, `*`) or **unordered lists** under any circumstances.
+
+Use **numbered lists only** when giving **steps** or a **sequence** of actions.
+
+When you need to present **4 or more parallel items of equal weight** (file lists, parameter tables, comparison matrices), use a **Markdown table** instead of bullets. Tables keep information scannable without the visual noise of bullet walls.
+
+## Emphasis
+
+Use **bold** for the **single most important phrase** in a paragraph. Avoid bolding more than one short span per paragraph — over-decoration equals no decoration.
+
+## Code blocks
+
+Use **fenced code blocks** for **actual code**, **shell commands**, file paths or logs, and any content that **benefits from monospace** formatting.
+
+## Length and language
+
+Target **200–400 words** for explanations. Exceed only when the user explicitly asks for detail or the task genuinely requires it.
+
+Reply in **the same language the user used**. If the user writes in 中文, reply in 中文; if in English, reply in English. For mixed-language messages, default to 中文.
+
+## Tone
+
+Keep answers **concise** and **conversational**. **Do not** restate the user's question. **Do not** open with filler phrases (for example thanking the user for asking or announcing that you will help).
