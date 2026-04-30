@@ -1,13 +1,13 @@
 ---
 name: unified-rules-skills-harness
-description: Unified Cursor/Claude operating skill that merges spec-delegate-review discipline, patch-first chunked editing, response style constraints, context compaction, and Databricks 429-safe execution. Use for any non-trivial coding, writing, refactor, or long-session task.
+description: Unified Cursor/Claude operating skill that merges spec-delegate-review discipline, conditional patch-first chunked editing, response style constraints, /compact-ready context ledgers, and Databricks 429-safe execution. Use lightly for normal substantive tasks and fully for long files, large writes, bloated context, socket resets, or rate-limit recovery.
 ---
 
 # Unified Rules + Skills Harness
 
 ## Scope
 
-Use this as the single default skill for substantive tasks. It merges:
+Use this as the single default skill for substantive tasks, but treat it as a safety belt rather than a ritual. It merges:
 
 1. Multi-agent spec-delegate-review workflow.
 2. Patch-first, chunked editing discipline.
@@ -15,15 +15,33 @@ Use this as the single default skill for substantive tasks. It merges:
 4. Context compaction ledger for long sessions.
 5. Databricks AI Gateway rate-limit-safe behavior.
 
+## Activation Levels
+
+### Level 0 - Trivial edit
+
+Use normal direct editing when the change is under about 20 lines, touches one obvious region, and has no recent tool failures.
+
+### Level 1 - Normal substantive edit
+
+Use patch-first thinking, keep the diff surgical, and run the cheapest relevant validation. A full ledger is not required.
+
+### Level 2 - Risky edit
+
+Use small top-down chunks when the change is over about 50 lines, touches a long file, edits structured config, or changes generated-looking content.
+
+### Level 3 - Recovery mode
+
+Use full ledger + chunked edits + low-output behavior when an edit freezes, a socket resets, context is noisy, output is getting large, or any 429 appears.
+
 ## Operating Order
 
-For non-trivial tasks, run this loop:
+For non-trivial tasks, scale this loop to the activation level:
 
 1. Define a micro-spec (goal, non-goal, done condition).
 2. Explore relevant files only; avoid broad unrelated edits.
 3. Apply minimal changes with patch-first strategy.
 4. Validate with the cheapest meaningful check.
-5. Compact context when session grows noisy.
+5. Compact context when session grows noisy, using `/compact` as a handoff point when supported.
 
 ## Editing Safety Rules
 
@@ -82,7 +100,27 @@ Next step:
 Validation:
 not run / passed / failed (+ active result)
 
-Compact after every 2-4 successful chunks or phase changes.
+Compact after every 2-4 risky chunks or phase changes.
+
+### Claude Code `/compact` handoff
+
+When Claude Code supports `/compact`, use it as the explicit handoff for long or noisy sessions.
+
+Before recommending `/compact`:
+
+1. Produce the ledger above with only active state.
+2. Include one exact next step.
+3. State that after `/compact`, work should resume only from that next step.
+4. Drop stale debate, rejected approaches, repeated background, and old logs.
+
+Recommend `/compact` when:
+
+1. The same background has been repeated.
+2. The task crosses a major phase boundary.
+3. There have been 2-4 risky patch rounds and more work remains.
+4. Databricks 429 or socket instability suggests context/output pressure.
+
+Do not recommend `/compact` for a fresh short task or after every tiny edit.
 
 ## Databricks Guardrails
 
@@ -120,6 +158,8 @@ Do not:
 3. Burst retry after rate-limit or overload failures.
 4. Continue from stale context without compaction when session is bloated.
 5. Produce giant unchanged code dumps.
+6. Force full recovery workflow onto trivial one-line edits.
+7. Recommend `/compact` so often that it interrupts steady progress.
 
 ## Trigger Phrases
 
