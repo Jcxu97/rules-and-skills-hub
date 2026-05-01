@@ -1,0 +1,48 @@
+{
+  "env": {
+    "ANTHROPIC_MODEL": "databricks-claude-opus-4-6",
+    "ANTHROPIC_BASE_URL": "https://5678659344564033.3.ai-gateway.azuredatabricks.net/anthropic",
+    "ANTHROPIC_AUTH_TOKEN": "<YOUR_TOKEN>",
+    "ANTHROPIC_DEFAULT_OPUS_MODEL": "databricks-claude-opus-4-6",
+    "ANTHROPIC_DEFAULT_SONNET_MODEL": "databricks-claude-sonnet-4-6",
+    "ANTHROPIC_DEFAULT_HAIKU_MODEL": "databricks-claude-haiku-4-5",
+    "ANTHROPIC_CUSTOM_HEADERS": "x-databricks-use-coding-agent-mode: true",
+    "CLAUDE_CODE_DISABLE_EXPERIMENTAL_BETAS": "1"
+  },
+  "permissions": {
+    "allow": [
+      "Read", "Write", "Edit", "Glob", "Grep", "Bash",
+      "WebFetch", "WebSearch", "Agent", "TaskCreate", "TaskUpdate", "NotebookEdit"
+    ],
+    "defaultMode": "bypassPermissions"
+  },
+  "model": "databricks-claude-opus-4-6",
+  "hooks": {
+    "PreCompact": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "h=~/.claude/history.jsonl; l=~/.claude/last-ledger.md; [ -f \"$h\" ] && { echo \"# Ledger $(date '+%Y-%m-%d %H:%M')\"; echo; tail -n 15 \"$h\"; } > \"$l\"",
+            "shell": "bash",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "f=~/.claude/last-ledger.md; [ -f \"$f\" ] && age=$(( $(date +%s) - $(stat -c %Y \"$f\") )) && sz=$(wc -c <\"$f\") && [ \"$age\" -lt 86400 ] && [ \"$sz\" -lt 8192 ] && jq -Rs '{hookSpecificOutput:{hookEventName:\"SessionStart\",additionalContext:(\"上次会话 ledger (last-ledger.md, 由 PreCompact hook 自动存档):\\n\\n\"+.)}}' \"$f\"",
+            "shell": "bash",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "PreToolUse": []
+  },
+  "skipDangerousModePermissionPrompt": true
+}
